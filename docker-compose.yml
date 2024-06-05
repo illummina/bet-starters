@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: prod
+    volumes:
+      - .:/opt/app/api
+    env_file:
+      - .env
+    command: [ "./entrypoint.sh" ]
+    depends_on:
+      mssql:
+        condition: service_healthy
+    environment:
+      RUN_MIGRATIONS: false
+      RUN_SEEDS: false
+    ports:
+      - 8080:8080
+
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ${MSSQL_CONTAINER_NAME}
+    user: root
+    environment:
+      TZ: "UTC"
+      ACCEPT_EULA: Y
+      MSSQL_PID: Express
+      MSSQL_USER: ${MSSQL_USER}
+      MSSQL_PASSWORD: ${MSSQL_PASSWORD}
+      MSSQL_DATABASE: ${MSSQL_DATABASE}
+    ports:
+      - ${MSSQL_PORT}:${MSSQL_PORT}
+    volumes:
+      - ./mssql-data:/var/opt/mssql/data
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -U $MSSQL_USER -P $MSSQL_PASSWORD -Q "if not exists (select * from sys.databases where name='$MSSQL_DATABASE') begin create database $MSSQL_DATABASE end select 'READY'" | grep -q "READY"
+      timeout: 20s
+      interval: 10s
+      retries: 10
+    restart: always

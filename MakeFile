@@ -1,0 +1,9 @@
+include .env
+
+migrate_up:
+	migrate -path=internal/database/migrations -database "sqlserver://${MSSQL_USER}:${MSSQL_PASSWORD}@${MSSQL_HOST}:${MSSQL_PORT}/${MSSQL_DATABASE}?connection+timeout=30" -verbose up
+
+migrate_down:
+	migrate -path=internal/database/migrations -database "sqlserver://${MSSQL_USER}:${MSSQL_PASSWORD}@${MSSQL_HOST}:${MSSQL_PORT}/${MSSQL_DATABASE}?connection+timeout=30" -verbose down
+
+.PHONY: migrate_up migrate_down
